@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import Groq from 'groq-sdk';
 import cors from "cors"
 import mongoose from "mongoose";
+import rateLimit from "express-rate-limit";
 import  {UserModel}  from "./db/user.js";
 dotenv.config()
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
@@ -23,8 +24,13 @@ const SUBMIT_ANSWER_URL = "https://faas-blr1-8177d592.doserverless.co/api/v1/web
 // const QUIZ_FETCH_URL = "https://faas-blr1-8177d592.doserverless.co/api/v1/web/fn-1c23ee6f-939a-44b2-9c4e-d17970ddd644/abes/fetchQuizDetails";
 
 
+const answerSubmissionLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,  
+  max: 5,                  
+  message: 'You are submitting answers too quickly. Please wait a bit and try again.',
+});
 
-app.post("/api/v1/fetch", async (req, res) => {
+app.post("/api/v1/fetch", answerSubmissionLimiter, async (req, res) => {
 
     const { quiz_uc, user_unique_code, pin } = req.body;
 
